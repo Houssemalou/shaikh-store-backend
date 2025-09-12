@@ -35,6 +35,9 @@ application:
       refresh-token:
         expiration: 604800000 # 7 days
 
+frontend:
+  url: ${FRONT_URL}
+
 server:
   servlet:
     context-path: /api/webStore
