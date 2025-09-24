@@ -12,6 +12,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import static org.springframework.security.config.Customizer.withDefaults;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
@@ -29,15 +30,16 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(req ->
 
-                        req.requestMatchers(
+                        req
+                                // Auth endpoints (avec et sans context-path)
+                                .requestMatchers(
                                         "/api/webStore/auth/**",
                                         "/auth/**",
-                                        "/orders/**",
-                                        "/api/orders/**",
-                                        "/categories/**",
-                                        "/products/**",
-                                        "/products/images/**",
-                                        "/auth/**",
+                                        "/orders/**"
+                                ).permitAll()
+
+                                // Swagger/OpenAPI
+                                .requestMatchers(
                                         "/v2/api-docs",
                                         "/v3/api-docs",
                                         "/v3/api-docs/**",
@@ -49,7 +51,20 @@ public class SecurityConfig {
                                         "/webjars/**",
                                         "/swagger-ui.html"
                                 ).permitAll()
-                                        .anyRequest()
+
+                                // Lecture publique (GET uniquement) des produits, catégories et images
+                                .requestMatchers(HttpMethod.GET,
+                                        "/products/**",
+
+                                        "/api/webStore/products/**",
+                                        "/categories/**",
+                                        "/api/webStore/categories/**",
+                                        "/products/images/**",
+                                        "/api/webStore/products/images/**"
+                                ).permitAll()
+
+                                // Toute autre requête nécessite une authentification
+                                .anyRequest()
                                 .authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
