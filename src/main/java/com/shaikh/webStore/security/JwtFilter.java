@@ -29,23 +29,27 @@ public class JwtFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-        if (request.getServletPath().contains("/api/webStore/auth")) {
+
+        String path = request.getServletPath();
+
+        // Ignorer les endpoints publics
+        if (path.startsWith("/orders") || path.startsWith("/api/orders") ||
+                path.startsWith("/auth") || path.startsWith("/swagger-ui") ||
+                path.startsWith("/v2/api-docs") || path.startsWith("/v3/api-docs")) {
+
             filterChain.doFilter(request, response);
             return;
         }
 
         final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String userEmail;
-
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
+            filterChain.doFilter(request, response); // laisser passer pour public
             return;
         }
 
-        jwt = authHeader.substring(7);
+        final String jwt = authHeader.substring(7);
         try {
-            userEmail = jwtService.extractUsername(jwt);
+            String userEmail = jwtService.extractUsername(jwt);
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
                 if (jwtService.isTokenValid(jwt, userDetails)) {
@@ -61,6 +65,7 @@ public class JwtFilter extends OncePerRequestFilter {
         } catch (Exception e) {
             System.err.println("Erreur lors de la validation du JWT : " + e.getMessage());
         }
+
         filterChain.doFilter(request, response);
     }
 }

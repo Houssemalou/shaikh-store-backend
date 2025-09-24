@@ -18,12 +18,14 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
+    private String description;
     private String photoPath;
     private Double price;
     private Double originalPrice;
     private Integer stock;
     private String status;
     private Integer discount;
+    private Boolean promo ;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @ManyToOne
     @JoinColumn(name = "category_id")

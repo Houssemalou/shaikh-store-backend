@@ -1,5 +1,6 @@
 package com.shaikh.webStore.model;
 
+import com.shaikh.webStore.dto.ProductDTO;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,7 +11,8 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class OrderProduct {
-    private String name;
+    private String productName;
     private Integer quantity;
-    private String price;
+    private Double price;
+
 }

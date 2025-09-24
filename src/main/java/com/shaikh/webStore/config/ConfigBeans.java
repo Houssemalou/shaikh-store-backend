@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -18,14 +17,18 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
-import java.util.Collections;
-
+import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
 public class ConfigBeans {
-    @Value("${frontend.url}")
-    private String front_url;
+
+    @Value("${frontend.url1}")
+    private String frontUrl1;
+
+    @Value("${frontend.url2}")
+    private String frontUrl2;
+
     private final UserDetailsService userDetailsService;
 
     @Bean
@@ -45,33 +48,26 @@ public class ConfigBeans {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
     @Bean
-    public AuditorAware<Integer> auditorAware(){
+    public AuditorAware<Integer> auditorAware() {
         return new ApplicationAuditAware();
     }
+
     @Bean
     public CorsFilter corsFilter() {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         final CorsConfiguration config = new CorsConfiguration();
+
+        // Autoriser plusieurs URLs
+        List<String> allowedOrigins = Arrays.asList(frontUrl1, frontUrl2);
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(Collections.singletonList(front_url));
+        config.setAllowedOrigins(allowedOrigins);
+
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
-        config.setAllowedMethods(Arrays.asList(
-                "GET",
-                "POST",
-                "DELETE",
-                "PUT",
-                "PATCH",
-                "OPTIONS"
-        ));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS"));
+
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
-
     }
-
-    /*@Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }*/
 }
-

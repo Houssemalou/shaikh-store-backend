@@ -4,16 +4,16 @@ package com.shaikh.webStore.service;
 import com.shaikh.webStore.dto.OrderDTO;
 import com.shaikh.webStore.model.Order;
 import com.shaikh.webStore.model.OrderProduct;
+import com.shaikh.webStore.model.Product;
 import com.shaikh.webStore.repository.OrderRepository;
 import com.shaikh.webStore.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-
 import java.util.List;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -31,16 +31,28 @@ public class OrderService {
     }
 
     public OrderDTO create(OrderDTO dto) {
+        updateProductStock(dto.getItems());
 
-        updateProductStock(dto.getProducts());
+        // reconstruire les items avec le prix depuis la BDD
+        List<OrderProduct> items = dto.getItems().stream().map(i -> {
+            // récupération du produit depuis la BDD par son nom (ou par ID si dispo)
+            Product product =  productRepo.findByName(i.getProductName())
+                    .orElseThrow(() -> new RuntimeException("Produit introuvable: " + i.getProductName()));
+
+            return OrderProduct.builder()
+                    .productName(product.getName())
+                    .quantity(i.getQuantity())
+                    .price(product.getPrice())   // ⚡ prix récupéré depuis la BDD
+                    .build();
+        }).collect(Collectors.toList());
+
         Order o = Order.builder()
-                .id(dto.getId() == null ? generateId() : dto.getId())
-                .status(dto.getStatus())
-                .items(dto.getItems())
-                .customer(dto.getCustomer())
-                .products(dto.getProducts())
+                .id(generateId())
+                .items(items)
+                .CustomerInfo(dto.getCustomerInfo())
                 .total(dto.getTotal())
                 .build();
+
         return toDto(repo.save(o));
     }
 
@@ -59,20 +71,20 @@ public class OrderService {
 
     private OrderDTO toDto(Order o) {
         return OrderDTO.builder()
-                .id(o.getId())
+                .orderId(o.getId())
                 .status(o.getStatus())
                 .date(o.getDate())
                 .time(o.getTime())
                 .items(o.getItems())
-                .customer(o.getCustomer())
-                .products(o.getProducts())
+                .customerInfo(o.getCustomerInfo())
+                .items(o.getItems())
                 .total(o.getTotal())
                 .build();
     }
 
     private void updateProductStock(List<OrderProduct> orderProducts) {
         for (OrderProduct op : orderProducts) {
-            productRepo.findByName(op.getName()).ifPresent(product -> {
+            productRepo.findByName(op.getProductName()).ifPresent(product -> {
                 int newStock = product.getStock() - op.getQuantity();
                 product.setStock(Math.max(newStock, 0));
                 if (product.getStock() == 0) {

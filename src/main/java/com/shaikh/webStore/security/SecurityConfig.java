@@ -10,8 +10,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import static org.springframework.http.HttpMethod.GET;
-import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.security.config.Customizer.withDefaults;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
@@ -31,10 +29,14 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(req ->
 
-                                req.requestMatchers(
+                        req.requestMatchers(
+                                        "/api/webStore/auth/**",
+                                        "/auth/**",
                                         "/orders/**",
+                                        "/api/orders/**",
                                         "/categories/**",
                                         "/products/**",
+                                        "/products/images/**",
                                         "/auth/**",
                                         "/v2/api-docs",
                                         "/v3/api-docs",
@@ -46,9 +48,7 @@ public class SecurityConfig {
                                         "/swagger-ui/**",
                                         "/webjars/**",
                                         "/swagger-ui.html"
-
-                                        )
-                                .permitAll()
+                                ).permitAll()
                                         .anyRequest()
                                 .authenticated()
                 )

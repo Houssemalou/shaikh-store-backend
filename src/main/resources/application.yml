@@ -1,49 +1,43 @@
+application:
+  name: webStore
+  security:
+    jwt:
+      secret-key: 1278f0e1ad725cf494ca5abab8d4efbcffa75837b5d4314567cb3d29862925f7c5b6606d417a2f2d6348ba7dd0038b9b5d58ea2cf32d1b28290abdf417356adcfa416703a25838a89460c6c6548041e7c99495e73c6db35ba5b114bb22effbb87424a168221d6f44293c81d39c8ba870cd1508348813ecc37df511747fe2986a00d86ee8c1ca0538f7f2623c031054d404bd3ee76b448768a75f0bc5221fc45556a885182ce8fc26e2f0b7e9283a5cd00620054d731d933ffb8eb033693122e620c01ef70eddcfcd86bc5aed260620c16813b6a7345228afd6d5bd9a2732586cfde2f780d5a0c2a03344457a4a81e6f381b8329edf2a7e009db20cb2a3ae55f6b1ccf3023462dc67dcc0d8d4f965a02e993f864f8e569062bbf1961b5147306ae48b4231e2c875d77be13cba2fb3ce0b111787f3cf084ac6e716fac62250001eb2e582262ee628ec7806fdf6da59da40e2a48389695083ef707a927c01e28bad674557fb11757aebdcd153219e3d7f30b3c67d677f4c2bcdedc769e146d915b3
+      expiration: 31536000000 # 1 an en millisecondes
+      refresh-token:
+        expiration: 604800000 # 7 jours en millisecondes
+
+frontend:
+  url1: ${FRONT_URL1}
+  url2: ${FRONT_URL2}
+
+upload:
+  dir: c:/uploads
+
 spring:
-  application:
-    name: webStore
   datasource:
     url: ${DB_URL}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
     properties:
       hibernate:
-        format_sql: false
-    database: postgresql
-
-
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: nourichadi70@gmail.com
-    password: snuo vpkw hfne zmvb
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-application:
-  security:
-    jwt:
-      secret-key: 1278f0e1ad725cf494ca5abab8d4efbcffa75837b5d4314567cb3d29862925f7c5b6606d417a2f2d6348ba7dd0038b9b5d58ea2cf32d1b28290abdf417356adcfa416703a25838a89460c6c6548041e7c99495e73c6db35ba5b114bb22effbb87424a168221d6f44293c81d39c8ba870cd1508348813ecc37df511747fe2986a00d86ee8c1ca0538f7f2623c031054d404bd3ee76b448768a75f0bc5221fc45556a885182ce8fc26e2f0b7e9283a5cd00620054d731d933ffb8eb033693122e620c01ef70eddcfcd86bc5aed260620c16813b6a7345228afd6d5bd9a2732586cfde2f780d5a0c2a03344457a4a81e6f381b8329edf2a7e009db20cb2a3ae55f6b1ccf3023462dc67dcc0d8d4f965a02e993f864f8e569062bbf1961b5147306ae48b4231e2c875d77be13cba2fb3ce0b111787f3cf084ac6e716fac62250001eb2e582262ee628ec7806fdf6da59da40e2a48389695083ef707a927c01e28bad674557fb11757aebdcd153219e3d7f30b3c67d677f4c2bcdedc769e146d915b3
-      expiration: 31536000000 # a day
-      refresh-token:
-        expiration: 604800000 # 7 days
-
-frontend:
-  url: ${FRONT_URL}
-
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+  web:
+    cors:
+      allowed-origins:
+        - ${FRONT_URL1}
+        - ${FRONT_URL2}
+      allowed-methods: "*"
+      allowed-headers: "*"
+      allow-credentials: true
 server:
-  servlet:
-    context-path: /api/webStore
   port: 8082
 
-upload:
-  dir: uploads
-
-
+  servlet:
+    context-path: /api/webStore

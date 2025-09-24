@@ -6,6 +6,7 @@ import com.shaikh.webStore.records.CategoryDiscountRequest;
 import com.shaikh.webStore.records.DiscountRequest;
 import com.shaikh.webStore.records.StatusRequest;
 import com.shaikh.webStore.service.ProductService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -43,9 +45,10 @@ public class ProductController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ProductDTO addProduct(
             @RequestPart("product") ProductDTO productDTO,
-            @RequestPart(value = "photo", required = false) MultipartFile photo
+            @RequestPart(value = "photo", required = false) MultipartFile photo,
+            HttpServletRequest request
     ) throws Exception {
-        return service.saveProduct(productDTO, photo);
+        return service.saveProduct(productDTO, photo, request);
     }
 
     @PutMapping("/{id}")
@@ -60,7 +63,7 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{id}/discount")
+    @PutMapping("/{id}/discount")
     public ResponseEntity<ProductDTO> discount(@PathVariable Long id, @RequestBody DiscountRequest req) {
         ProductDTO updated = service.applyDiscount(id, req.discount());
         return updated == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(updated);
@@ -72,11 +75,7 @@ public class ProductController {
         return updated == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(updated);
     }
 
-    @PostMapping("/discount/category")
-    public ResponseEntity<List<ProductDTO>> discountCategory(@RequestBody CategoryDiscountRequest req) {
-        var updated = service.applyDiscountToCategory(req.categoryId(), req.discount());
-        return ResponseEntity.ok(updated);
-    }
+
 
     @GetMapping("/images/{filename:.+}")
     public ResponseEntity<Resource> getImage(@PathVariable String filename) throws Exception {
@@ -87,11 +86,18 @@ public class ProductController {
             return ResponseEntity.notFound().build();
         }
 
+        // Détecter automatiquement le type du fichier (jpeg, png, avif, webp, etc.)
+        String contentType = Files.probeContentType(filePath);
+        if (contentType == null) {
+            contentType = "application/octet-stream"; // fallback par défaut
+        }
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
-                .contentType(MediaType.IMAGE_JPEG)
+                .contentType(MediaType.parseMediaType(contentType))
                 .body(resource);
     }
+
 
 
 }

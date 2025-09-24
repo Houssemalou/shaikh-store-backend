@@ -11,7 +11,7 @@ import lombok.*;
 @Builder
 public class CustomerInfo {
     private String name;
-    private String email;
     private String phone;
     private String address;
+
 }

@@ -17,18 +17,15 @@ import java.util.List;
 public class Order {
     @Id
     private String id;
-
     private String status;
     private String date;
     private String time;
-    private Integer items;
-
     @Embedded
-    private CustomerInfo customer;
+    private CustomerInfo CustomerInfo;
 
     @ElementCollection
-    @CollectionTable(name = "order_products", joinColumns = @JoinColumn(name = "order_id"))
-    private List<OrderProduct> products;
+    @CollectionTable(name = "order_items", joinColumns = @JoinColumn(name = "order_id"))
+    private List<OrderProduct> items;
 
     private String total;
 
