@@ -33,8 +33,8 @@ public class WebStoreApplication implements CommandLineRunner {
 			User admin = User.builder()
 					.firstname("Default")
 					.lastname("Admin")
-					.email("admin@example.com")
-					.password(passwordEncoder.encode("admin123")) // mot de passe par défaut
+					.email("admin@ardastore.com")
+					.password(passwordEncoder.encode("ardastore@2025!")) // mot de passe par défaut
 
 
 					.build();
@@ -45,16 +45,16 @@ public class WebStoreApplication implements CommandLineRunner {
 			System.out.println("ℹ️ Des utilisateurs existent déjà, aucun admin par défaut créé.");
 		}
 		try {
-			//String baseUrl = "https://elsheikh-store.com";
-			//System.out.println("🔄 Scraping des catégories et produits depuis " + baseUrl + " ...");
+			String baseUrl = "https://elsheikh-store.com";
+			System.out.println("🔄 Scraping des catégories et produits depuis " + baseUrl + " ...");
 
 			// Scraper les catégories et les produits
-			//scraperService.scrapeAndSaveCategories(baseUrl);
+			scraperService.scrapeAndSaveCategories(baseUrl);
 
-			//System.out.println("✅ Scraping terminé avec succès !");
+			System.out.println("✅ Scraping terminé avec succès !");
 		} catch (Exception e) {
-			//System.err.println("❌ Erreur lors du scraping : " + e.getMessage());
-			//e.printStackTrace();
+			System.err.println("❌ Erreur lors du scraping : " + e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
