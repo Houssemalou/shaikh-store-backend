@@ -2,6 +2,7 @@ package com.shaikh.webStore.service;
 
 import com.shaikh.webStore.model.Category;
 import com.shaikh.webStore.model.Product;
+import com.shaikh.webStore.model.ProductImage;
 import com.shaikh.webStore.repository.CategoryRepository;
 import com.shaikh.webStore.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -67,7 +68,9 @@ public class ProductScraperService {
                     Product product = Product.builder()
                             .name(name)
                             .description(description)
-                            .photoPath(photoPath)
+                            // Ne plus utiliser photoPath pour le stockage principal. Nous enregistrerons
+                            // l'URL de la photo dans la liste `images` comme premier élément.
+                            .photoPath(null)
                             .price(price)
                             .originalPrice(originalPrice)
                             .stock(stock)
@@ -76,6 +79,15 @@ public class ProductScraperService {
                             .discount(discount)
                             .category(category)
                             .build();
+
+                    // Si photoPath présente, l'ajouter comme premier ProductImage
+                    if (photoPath != null && !photoPath.isEmpty()) {
+                        ProductImage img = ProductImage.builder()
+                                .imagePath(photoPath)
+                                .product(product)
+                                .build();
+                        product.getImages().add(img);
+                    }
 
                     productRepository.save(product);
                     System.out.println("✅ Produit inséré : " + name);

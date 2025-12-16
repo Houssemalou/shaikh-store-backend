@@ -2,6 +2,7 @@ package com.shaikh.webStore.service;
 
 import com.shaikh.webStore.model.Category;
 import com.shaikh.webStore.model.Product;
+import com.shaikh.webStore.model.ProductImage;
 import com.shaikh.webStore.repository.CategoryRepository;
 import com.shaikh.webStore.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -92,6 +93,15 @@ public class ScraperService {
                         .status("AVAILABLE")
                         .discount(promo ? (int) ((originalPrice - price) / originalPrice * 100) : 0)
                         .build();
+
+                // Ajouter photoUrl comme premier élément de la liste images
+                if (photoUrl != null && !photoUrl.isEmpty()) {
+                    ProductImage productImage = ProductImage.builder()
+                            .imagePath(photoUrl)
+                            .product(product)
+                            .build();
+                    product.getImages().add(productImage);
+                }
 
                 productRepository.save(product);
 

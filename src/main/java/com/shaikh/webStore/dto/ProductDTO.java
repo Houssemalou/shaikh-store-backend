@@ -3,6 +3,7 @@ package com.shaikh.webStore.dto;
 
 import lombok.*;
 
+import java.util.List;
 
 @Getter
 @Setter
@@ -21,4 +22,5 @@ public class ProductDTO {
     private String status;
     private Integer discount;
     private Boolean promo ;
+    private List<String> images;
 }

@@ -2,7 +2,6 @@ package com.shaikh.webStore.controller;
 
 
 import com.shaikh.webStore.dto.ProductDTO;
-import com.shaikh.webStore.records.CategoryDiscountRequest;
 import com.shaikh.webStore.records.DiscountRequest;
 import com.shaikh.webStore.records.StatusRequest;
 import com.shaikh.webStore.service.ProductService;
@@ -18,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,10 +45,10 @@ public class ProductController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ProductDTO addProduct(
             @RequestPart("product") ProductDTO productDTO,
-            @RequestPart(value = "photo", required = false) MultipartFile photo,
+            @RequestPart(value = "photos", required = false) MultipartFile[] photos,
             HttpServletRequest request
-    ) throws Exception {
-        return service.saveProduct(productDTO, photo, request);
+    ) throws IOException {
+        return service.saveProduct(productDTO, photos, request);
     }
 
     @PutMapping("/{id}")
@@ -78,7 +78,7 @@ public class ProductController {
 
 
     @GetMapping("/images/{filename:.+}")
-    public ResponseEntity<Resource> getImage(@PathVariable String filename) throws Exception {
+    public ResponseEntity<Resource> getImage(@PathVariable String filename) throws IOException {
         Path filePath = Paths.get(uploadDir).resolve(filename).normalize();
         Resource resource = new UrlResource(filePath.toUri());
 
@@ -98,6 +98,18 @@ public class ProductController {
                 .body(resource);
     }
 
-
+    @PostMapping("/{id}/images")
+    public ResponseEntity<ProductDTO> addImages(
+            @PathVariable Long id,
+            @RequestPart(value = "photos", required = true) MultipartFile[] photos,
+            HttpServletRequest request
+    ) {
+        try {
+            ProductDTO updated = service.addImagesToProduct(id, photos, request);
+            return updated == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(updated);
+        } catch (IOException e) {
+            return ResponseEntity.status(500).build();
+        }
+    }
 
 }
