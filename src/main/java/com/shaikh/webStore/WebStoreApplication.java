@@ -34,9 +34,7 @@ public class WebStoreApplication implements CommandLineRunner {
 					.firstname("Default")
 					.lastname("Admin")
 					.email("admin@ardastore.com")
-					.password(passwordEncoder.encode("ardastore@2025!")) // mot de passe par défaut
-
-
+					.password(passwordEncoder.encode("GoNewArda@2026!")) // mot de passe par défaut
 					.build();
 
 			userRepository.save(admin);
