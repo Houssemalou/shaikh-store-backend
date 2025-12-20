@@ -23,11 +23,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConfigBeans {
 
-    @Value("${frontend.url1}")
-    private String frontUrl1;
+    //@Value("${frontend.url1}")
+    //private String frontUrl1;
 
-    @Value("${frontend.url2}")
-    private String frontUrl2;
+    //@Value("${frontend.url2}")
+    //private String frontUrl2;
 
     private final UserDetailsService userDetailsService;
 
@@ -60,7 +60,7 @@ public class ConfigBeans {
         final CorsConfiguration config = new CorsConfiguration();
 
         // Autoriser plusieurs URLs
-        List<String> allowedOrigins = Arrays.asList(frontUrl1, frontUrl2);
+        List<String> allowedOrigins = Arrays.asList("https://ardastores.com", "https://admin.ardastores.com");
         config.setAllowCredentials(true);
         config.setAllowedOrigins(allowedOrigins);
 
