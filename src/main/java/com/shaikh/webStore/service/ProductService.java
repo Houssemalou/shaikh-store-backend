@@ -92,6 +92,7 @@ public class ProductService {
             existing.setStatus(dto.getStatus());
             existing.setDiscount(dto.getDiscount());
             existing.setPromo(dto.getPromo());
+            existing.setDescription(dto.getDescription());
 
             if (dto.getCategory() != null && !dto.getCategory().isEmpty()) {
                 Category category = categoryRepository.findByName(dto.getCategory())

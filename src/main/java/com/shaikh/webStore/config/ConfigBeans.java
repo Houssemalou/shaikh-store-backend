@@ -60,7 +60,11 @@ public class ConfigBeans {
         final CorsConfiguration config = new CorsConfiguration();
 
         // Autoriser plusieurs URLs
+<<<<<<< HEAD
         List<String> allowedOrigins = Arrays.asList("https://ardastores.com", "https://admin.ardastores.com","http://localhost:8080","http://localhost:8081");
+=======
+        List<String> allowedOrigins = Arrays.asList("https://ardastores.com", "https://admin.ardastores.com", "http://localhost:3000", "http://localhost:8081");
+>>>>>>> 14787edad93e9d0e5b16eb4660912cd373544f7f
         config.setAllowCredentials(true);
         config.setAllowedOrigins(allowedOrigins);
 
