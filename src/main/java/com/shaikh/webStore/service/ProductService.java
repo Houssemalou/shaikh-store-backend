@@ -9,17 +9,12 @@ import com.shaikh.webStore.repository.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,10 +23,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProductService {
 
-    @Value("${upload.dir}")
-    private String uploadDir;
     private final CategoryRepository categoryRepository;
     private final ProductRepository repo;
+    private final MinioService minioService;
 
     public List<ProductDTO> listAll() {
         return repo.findAll().stream().map(this::toDto).collect(Collectors.toList());
@@ -44,23 +38,23 @@ public class ProductService {
     public ProductDTO saveProduct(ProductDTO dto, MultipartFile[] photos, HttpServletRequest request) throws IOException {
         List<String> imagePaths = new ArrayList<>();
 
-        if (photos != null && photos.length > 0) {
+        if (photos != null) {
             for (MultipartFile photo : photos) {
                 if (!photo.isEmpty()) {
-                    String fileName = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
-                    Path filePath = Paths.get(uploadDir, fileName);
+                    try {
+                        String objectName = minioService.uploadFile(photo);
 
-                    Files.createDirectories(filePath.getParent());
-                    Files.copy(photo.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                        String baseUrl = String.format("%s://%s:%d",
+                                request.getScheme(),
+                                request.getServerName(),
+                                request.getServerPort()
+                        );
 
-                    String baseUrl = String.format("%s://%s:%d",
-                            request.getScheme(),
-                            request.getServerName(),
-                            request.getServerPort()
-                    );
-
-                    String imageUrl = baseUrl + request.getContextPath() + "/products/images/" + fileName;
-                    imagePaths.add(imageUrl);
+                        String imageUrl = baseUrl + request.getContextPath() + "/products/images/" + objectName;
+                        imagePaths.add(imageUrl);
+                    } catch (Exception e) {
+                        throw new IOException("Erreur lors de l'upload vers MinIO", e);
+                    }
                 }
             }
         }
@@ -117,25 +111,25 @@ public class ProductService {
                 if (photos != null) {
                     for (MultipartFile photo : photos) {
                         if (!photo.isEmpty()) {
-                            String fileName = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
-                            Path filePath = Paths.get(uploadDir, fileName);
+                            try {
+                                String objectName = minioService.uploadFile(photo);
 
-                            Files.createDirectories(filePath.getParent());
-                            Files.copy(photo.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                                String baseUrl = String.format("%s://%s:%d",
+                                        request.getScheme(),
+                                        request.getServerName(),
+                                        request.getServerPort()
+                                );
 
-                            String baseUrl = String.format("%s://%s:%d",
-                                    request.getScheme(),
-                                    request.getServerName(),
-                                    request.getServerPort()
-                            );
+                                String imageUrl = baseUrl + request.getContextPath() + "/products/images/" + objectName;
 
-                            String imageUrl = baseUrl + request.getContextPath() + "/products/images/" + fileName;
-
-                            ProductImage productImage = ProductImage.builder()
-                                    .imagePath(imageUrl)
-                                    .product(product)
-                                    .build();
-                            product.getImages().add(productImage);
+                                ProductImage productImage = ProductImage.builder()
+                                        .imagePath(imageUrl)
+                                        .product(product)
+                                        .build();
+                                product.getImages().add(productImage);
+                            } catch (Exception e) {
+                                throw new IOException("Erreur lors de l'upload vers MinIO", e);
+                            }
                         }
                     }
                 }
@@ -257,4 +251,41 @@ public class ProductService {
             product.setPrice(product.getOriginalPrice());
         }
     }
+
+    public ProductDTO deleteImageFromProductByFilename(Long productId, String filename) {
+        return repo.findById(productId).map(product -> {
+            String imageUrlSuffix = "/products/images/" + filename;
+            ProductImage imageToDelete = product.getImages().stream()
+                    .filter(img -> img.getImagePath().endsWith(imageUrlSuffix))
+                    .findFirst()
+                    .orElse(null);
+
+            if (imageToDelete != null) {
+                // Extract objectName, which is filename
+                String objectName = filename;
+
+                try {
+                    minioService.deleteFile(objectName);
+                } catch (Exception e) {
+                    throw new RuntimeException("Erreur lors de la suppression de l'image dans MinIO", e);
+                }
+
+                product.getImages().remove(imageToDelete);
+
+                // If the deleted image was the main photo, set a new one
+                if (product.getPhotoPath() != null && product.getPhotoPath().endsWith(imageUrlSuffix)) {
+                    if (!product.getImages().isEmpty()) {
+                        product.setPhotoPath(product.getImages().get(0).getImagePath());
+                    } else {
+                        product.setPhotoPath(null);
+                    }
+                }
+
+                return toDto(repo.save(product));
+            } else {
+                throw new RuntimeException("Image not found");
+            }
+        }).orElse(null);
+    }
 }
+

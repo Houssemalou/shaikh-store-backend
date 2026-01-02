@@ -4,13 +4,13 @@ package com.shaikh.webStore.controller;
 import com.shaikh.webStore.dto.ProductDTO;
 import com.shaikh.webStore.records.DiscountRequest;
 import com.shaikh.webStore.records.StatusRequest;
+import com.shaikh.webStore.service.MinioService;
 import com.shaikh.webStore.service.ProductService;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.core.io.UrlResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -28,9 +28,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductController {
 
-    @Value("${upload.dir}")
-    private String uploadDir;
     private final ProductService service;
+    private final MinioService minioService;
 
 
     @GetMapping
@@ -78,30 +77,29 @@ public class ProductController {
 
 
     @GetMapping("/images/{filename:.+}")
-    public ResponseEntity<Resource> getImage(@PathVariable String filename) throws IOException {
-        Path filePath = Paths.get(uploadDir).resolve(filename).normalize();
-        Resource resource = new UrlResource(filePath.toUri());
+    public ResponseEntity<Resource> getImage(@PathVariable String filename) {
+        try (InputStream inputStream = minioService.downloadFile(filename)) {
+            ByteArrayResource resource = new ByteArrayResource(inputStream.readAllBytes());
 
-        if (!resource.exists()) {
+            // Détecter automatiquement le type du fichier (jpeg, png, avif, webp, etc.)
+            String contentType = Files.probeContentType(Paths.get(filename));
+            if (contentType == null) {
+                contentType = "application/octet-stream"; // fallback par défaut
+            }
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .body(resource);
+        } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
-
-        // Détecter automatiquement le type du fichier (jpeg, png, avif, webp, etc.)
-        String contentType = Files.probeContentType(filePath);
-        if (contentType == null) {
-            contentType = "application/octet-stream"; // fallback par défaut
-        }
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
-                .contentType(MediaType.parseMediaType(contentType))
-                .body(resource);
     }
 
     @PostMapping("/{id}/images")
     public ResponseEntity<ProductDTO> addImages(
             @PathVariable Long id,
-            @RequestPart(value = "photos", required = true) MultipartFile[] photos,
+            @RequestPart("photos") MultipartFile[] photos,
             HttpServletRequest request
     ) {
         try {
@@ -109,6 +107,16 @@ public class ProductController {
             return updated == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(updated);
         } catch (IOException e) {
             return ResponseEntity.status(500).build();
+        }
+    }
+
+    @DeleteMapping("/{productId}/images/{filename:.+}")
+    public ResponseEntity<ProductDTO> deleteImage(@PathVariable Long productId, @PathVariable String filename) {
+        try {
+            ProductDTO updated = service.deleteImageFromProductByFilename(productId, filename);
+            return updated == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
         }
     }
 

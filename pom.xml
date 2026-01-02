@@ -124,6 +124,11 @@
 			<artifactId>rest-api-sdk</artifactId>
 			<version>1.14.0</version>
 		</dependency>
+		<dependency>
+			<groupId>io.minio</groupId>
+			<artifactId>minio</artifactId>
+			<version>8.5.7</version>
+		</dependency>
 
 		<!-- Charge automatiquement un fichier .env à la racine en environnement local -->
 		<dependency>
